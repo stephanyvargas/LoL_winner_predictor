@@ -39,28 +39,30 @@ def get_train_data_only(BANS = False):
 
     #DataFrame for the teams stats
     df_train, _, _, _ = get_data_split()
-    df_teams = df_train.copy()
+    df_teams = df_train.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
 
     #DataFrame for the individual players stats plus the bans
     ##DataFrame dedicated to the BLUE team
-    df_teams['teams.BLUE.players'].explode()
-    df_normalized_BLUE = pd.json_normalize(df_teams['teams.BLUE.players'].explode())
-    df_BLUE = df_normalized_BLUE.copy()
+    df_train['teams.BLUE.players'].explode()
+    df_BLUE = pd.json_normalize(df_train['teams.BLUE.players'].explode())
 
     #DataFrame dedicated to the RED team
-    df_teams['teams.RED.players'].explode()
-    df_normalized_RED = pd.json_normalize(df_teams['teams.RED.players'].explode())
-    df_RED = df_normalized_RED.copy()
+    df_train['teams.RED.players'].explode()
+    df_RED = pd.json_normalize(df_train['teams.RED.players'].explode())
+
+    #Include the game_id in every dataframe so we can merge dfs
+    get_index = df_train['id'].tolist()
+    index_preproc = np.asarray([[index] * 5 for index in get_index])
+    index_teams = index_preproc.reshape(len(df_train) * 5).tolist()
+    df_RED['game_id'] = index_teams
+    df_BLUE['game_id'] = index_teams
 
     if BANS:
         #Dataframe dedicated to the Bans
-        df_teams['picks_bans'].explode()
-        df_normalized_BANS = pd.json_normalize(df_teams['picks_bans'].explode())
-        df_BANS = df_normalized_BANS.copy()
-        df_teams = df_train.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
+        df_train['picks_bans'].explode()
+        df_BANS = pd.json_normalize(df_train['picks_bans'].explode())
         return df_teams, df_BLUE, df_RED, df_BANS
 
-    df_teams = df_train.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
     return df_teams, df_BLUE, df_RED
 
 
