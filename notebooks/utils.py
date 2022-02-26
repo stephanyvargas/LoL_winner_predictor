@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import json
 
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -12,6 +11,7 @@ FILE_PATH = "../raw_data/full_dump.json"
 def get_patch_year(s):
     """Transform the version of the game into the year"""
     return int(s.split('.')[0]) + 2010
+
 
 def get_data():
     """Method to get the data"""
@@ -30,24 +30,34 @@ def get_data():
     return df_teams
 
 
-def get_data_split():
+def get_data_split(split_value = 0.8):
     """Method to get the data splited in training and test"""
 
     df = get_data()
-    y = LabelEncoder().fit(df.winner).transform(df.winner)
-    X = df.drop('winner', axis=1)
 
-    #Get the last 5 games for evaluating in the end
+    df['patch'] = pd.to_numeric(df["patch"], downcast="float")
+    df_sort = df.sort_values(['patch'], ascending=True)
 
-    #Return the train and test data
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+    #Return data to train, test, score and evaluate
+    ##Data to train
+    data_length = int(len(df_sort)/split_value)
+    data_train = df_sort[:data_length]
+
+    ##Get the last 5 games for evaluating in the end
+    data_eval = df_sort[-5:]
+
+    ##Data to test and score
+    data_test = df_sort[data_length:-5]
+
+    #Return the train, test and eval data
+    return data_train, data_eval, data_test
 
 
-def get_train_data_only(BANS = False):
+def get_train_data_only(BANS = False, evaluate_data = False):
     """Method to get the ONLY training data divided into three DataFrames"""
 
     #DataFrame for the teams stats
-    df_train, _, _, _ = get_data_split()
+    df_train, df_eval, df_test = get_data_split()
     df_teams = df_train.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
 
     #DataFrame for the individual players stats plus the bans
@@ -71,6 +81,9 @@ def get_train_data_only(BANS = False):
         df_train['picks_bans'].explode()
         df_BANS = pd.json_normalize(df_train['picks_bans'].explode())
         return df_teams, df_BLUE, df_RED, df_BANS
+
+    if evaluate_data:
+        return df_teams, df_BLUE, df_RED, df_BANS, df_eval
 
     return df_teams, df_BLUE, df_RED
 
