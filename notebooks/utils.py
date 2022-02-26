@@ -9,6 +9,10 @@ from sklearn.preprocessing import LabelEncoder
 FILE_PATH = "../raw_data/full_dump.json"
 
 
+def get_patch_year(s):
+    """Transform the version of the game into the year"""
+    return int(s.split('.')[0]) + 2010
+
 def get_data():
     """Method to get the data"""
 
@@ -20,6 +24,9 @@ def get_data():
     df_normalized_teams = pd.json_normalize(data.values())
     df_teams = df_normalized_teams.copy()
 
+    #return the year the game was played
+    df_teams['year'] = df_teams.patch.apply(get_patch_year)
+
     return df_teams
 
 
@@ -29,6 +36,8 @@ def get_data_split():
     df = get_data()
     y = LabelEncoder().fit(df.winner).transform(df.winner)
     X = df.drop('winner', axis=1)
+
+    #Get the last 5 games for evaluating in the end
 
     #Return the train and test data
     return train_test_split(X, y, test_size=0.2, random_state=42)
