@@ -26,7 +26,7 @@ def get_data():
 
     #return the year the game was played
     df_teams['year'] = df_teams.patch.apply(get_patch_year)
-
+    df_teams = df_teams[(df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_1_1') & (df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_3_1')]
     return df_teams
 
 
