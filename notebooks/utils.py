@@ -7,6 +7,9 @@ from sklearn.preprocessing import LabelEncoder
 
 FILE_PATH = "../raw_data/full_dump.json"
 
+def get_patch_year(s):
+    return int(s.split('.')[0]) + 2010
+
 
 def get_data():
     """Method to get the data"""
@@ -36,7 +39,7 @@ def get_data_split(split_value = 0.8):
 
     #Return data to train, test, score and evaluate
     ##Data to train
-    data_length = int(len(df_sort)/split_value)
+    data_length = int(len(df_sort)*split_value)
     data_train = df_sort[:data_length]
 
     ##Get the last 5 games for evaluating in the end
