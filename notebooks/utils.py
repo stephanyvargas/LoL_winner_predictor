@@ -8,11 +8,6 @@ from sklearn.preprocessing import LabelEncoder
 FILE_PATH = "../raw_data/full_dump.json"
 
 
-def get_patch_year(s):
-    """Transform the version of the game into the year"""
-    return int(s.split('.')[0]) + 2010
-
-
 def get_data():
     """Method to get the data"""
 
