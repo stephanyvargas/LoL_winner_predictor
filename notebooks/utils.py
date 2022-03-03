@@ -24,6 +24,7 @@ def get_data():
 
     #return the year the game was played
     df_teams['year'] = df_teams.patch.apply(get_patch_year)
+    #remove the games were a champion played in both teams -> not possible
     df_teams = df_teams[(df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_1_1') & (df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_3_1')]
     df_teams.rename(columns={"id": "game_id"})
     return df_teams
