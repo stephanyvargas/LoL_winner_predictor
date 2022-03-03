@@ -52,39 +52,54 @@ def get_data_split(split_value = 0.8):
     return data_train, data_eval, data_test
 
 
-def get_train_data_only(BANS = False, evaluate_data = False):
-    """Method to get the ONLY training data divided into three DataFrames"""
-
+def process_json_data(df):
     #DataFrame for the teams stats
-    df_train, df_eval, df_test = get_data_split()
-    df_teams = df_train.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
+    df_teams = df.drop(['teams.BLUE.players', 'teams.RED.players', 'picks_bans'], axis=1)
 
     #DataFrame for the individual players stats plus the bans
     ##DataFrame dedicated to the BLUE team
-    df_train['teams.BLUE.players'].explode()
-    df_BLUE = pd.json_normalize(df_train['teams.BLUE.players'].explode())
+    df['teams.BLUE.players'].explode()
+    df_BLUE = pd.json_normalize(df['teams.BLUE.players'].explode())
 
     #DataFrame dedicated to the RED team
-    df_train['teams.RED.players'].explode()
-    df_RED = pd.json_normalize(df_train['teams.RED.players'].explode())
+    df['teams.RED.players'].explode()
+    df_RED = pd.json_normalize(df['teams.RED.players'].explode())
 
     #Include the game_id in every dataframe so we can merge dfs
-    get_index = df_train['id'].tolist()
+    get_index = df['id'].tolist()
     index_preproc = np.asarray([[index] * 5 for index in get_index])
-    index_teams = index_preproc.reshape(len(df_train) * 5).tolist()
+    index_teams = index_preproc.reshape(len(df) * 5).tolist()
     df_RED['game_id'] = index_teams
     df_BLUE['game_id'] = index_teams
+    return df_teams, df_BLUE, df_RED
+
+
+def get_train_data_only(BANS = False, evaluate_data = False, train_data = True, test_data = False):
+    """Method to get the training/evaluate data divided into three DataFrames.
+    Ban data is returned as a single DataFrame."""
+
+    df_train, df_eval, df_test = get_data_split()
+
+    if train_data:
+        # roughly 80% of the data set to train the ML method
+        df_teams, df_BLUE, df_RED = process_json_data(df_train)
+        return df_teams, df_BLUE, df_RED
+
+    if evaluate_data:
+        # 5 data points to evaluate the method
+        df_teams, df_BLUE, df_RED = process_json_data(df_eval)
+        return df_teams, df_BLUE, df_RED
+
+    if test_data:
+        # rougly 20% of the data set to test the ML model
+        df_teams, df_BLUE, df_RED = process_json_data(df_test)
+        return df_teams, df_BLUE, df_RED
 
     if BANS:
         #Dataframe dedicated to the Bans
         df_train['picks_bans'].explode()
         df_BANS = pd.json_normalize(df_train['picks_bans'].explode())
-        return df_teams, df_BLUE, df_RED, df_BANS
-
-    if evaluate_data:
-        return df_teams, df_BLUE, df_RED, df_BANS, df_eval
-
-    return df_teams, df_BLUE, df_RED
+        return df_BANS
 
 
 if __name__ == '__main__':
