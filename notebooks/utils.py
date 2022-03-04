@@ -3,7 +3,7 @@ import pandas as pd
 import json
 
 from sklearn.preprocessing import LabelEncoder
-
+from sklearn.model_selection import train_test_split
 
 FILE_PATH = "../raw_data/full_dump.json"
 
@@ -27,10 +27,10 @@ def get_data():
     #remove the games were a champion played in both teams -> not possible
     df_teams = df_teams[(df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_1_1') & (df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_3_1')]
     df_teams.rename(columns={"id": "game_id"})
-    return df_teams
+    return df_teams[df_teams.year > 2015]
 
 
-def get_data_split(split_value = 0.8):
+def get_data_split(split_value = 0.6):
     """Method to get the data splited in training and test"""
 
     df = get_data()
@@ -39,15 +39,20 @@ def get_data_split(split_value = 0.8):
     df_sort = df.sort_values(['patch'], ascending=True)
 
     #Return data to train, test, score and evaluate
-    ##Data to train
+    ##Split_value*100% old games + halve new games to train
     data_length = int(len(df_sort)*split_value)
-    data_train = df_sort[:data_length]
+    data_sub_train = df_sort[:data_length]
+    y = df_sort[data_length:-5]['winner']
+
+    #get halve new games to train and test
+    X_train, data_test, y_train, y_test = train_test_split(df_sort[data_length:-5],
+                                                        y, test_size=0.5, random_state=42)
+
+    #Get the 60% + 20% of data as training
+    data_train = pd.concat([X_train, data_sub_train])
 
     ##Get the last 5 games for evaluating in the end
     data_eval = df_sort[-5:]
-
-    ##Data to test and score
-    data_test = df_sort[data_length:-5]
 
     #Return the train, test and eval data
     return data_train, data_eval, data_test
@@ -101,6 +106,23 @@ def get_train_data_only(BANS = False, evaluate_data = False, train_data = True, 
         df_train['picks_bans'].explode()
         df_BANS = pd.json_normalize(df_train['picks_bans'].explode())
         return df_BANS
+
+
+def get_synergy(x,y, df_synergy_matrix):
+    try:
+        x = df_synergy_matrix.loc[x][y]
+    except KeyError:
+        x = 0.5
+    return x
+
+
+def pair_wise_synergy(df, df_synergy_matrix, name):
+    #get the mean value of the pairwise combination of champions synergy
+    result_Synergy = df[['game_id', 'champion_id']].groupby(['game_id']).aggregate({
+        'champion_id': lambda z: [get_synergy(x,y, df_synergy_matrix) for x in z for y in z if x != y]
+    })
+    result_Synergy['mean_synergy_'+str(name)] = result_Synergy.champion_id.apply(lambda x: sum(x)/len(x))
+    return result_Synergy.drop('champion_id', axis=1)
 
 
 if __name__ == '__main__':
