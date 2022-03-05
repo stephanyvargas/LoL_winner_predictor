@@ -105,11 +105,23 @@ def get_train_data_only(BANS = False, evaluate_data = False, train_data = True, 
         df_BANS = pd.json_normalize(df_train['picks_bans'].explode())
         return df_BANS
 
+
 def get_synergy(x,y, df_synergy_matrix):
     try:
         x = df_synergy_matrix.loc[x][y]
     except KeyError:
         x = 0.5
+    return x
+
+
+def get_vs_rate(id_x, role, id_y, rate_champion_vs_champion):
+    try:
+        x = rate_champion_vs_champion.loc[id_x, role, role, id_y, True]
+    except KeyError:
+        try:
+            x = 1-rate_champion_vs_champion.loc[id_x, role, role, id_y, False]
+        except KeyError:
+            x = 0.5
     return x
 
 
