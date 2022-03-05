@@ -61,6 +61,30 @@ def synergy_matrix(df_BLUE, df_RED):
     champions_won_percentage_imputed = pd.DataFrame(impute_nan.fit(champions_won_percentage).transform(champions_won_percentage), columns=champions_id_unique, index=champions_id_unique)
     champions_won_percentage_imputed
 
-    champions_won_percentage_imputed.to_csv('champions_won_percentage_imputed.csv')
+    champions_won_percentage_imputed.to_csv('champions_won_percentage_imputed.csv', index_label='index')
+
+    #Sanity check
+    ##check that there is no division by zero
+    '''np.isinf(champions_won_percentage_imputed).values.sum()'''
+
+    ##check how many values have been imputed
+    '''np.isnan(champions_won_percentage_imputed).values.sum()
+    np.isnan(champions_won_percentage).values.sum()'''
 
     return champions_won_percentage_imputed
+
+
+def Role_DataFrame(df_BLUE, df_RED):
+    df_BLUE_RED = pd.merge(left=df_BLUE, right=df_RED, left_on= 'game_id', right_on= 'game_id')
+    df_role = df_BLUE_RED[['champion_id_x', 'role_x', 'role_y', 'champion_id_y', 'win_x', 'game_id']]
+    champion_vs_champion = pd.DataFrame(df_role[['champion_id_x', 'role_x', 'role_y', 'champion_id_y', 'win_x']].value_counts())
+
+    #times that a given champion played against another champion by role
+    total_champion_vs_champion = pd.DataFrame(df_BLUE_RED[['champion_id_x', 'role_x', 'role_y', 'champion_id_y']].value_counts())
+
+    #percentage of times that a champion has lost or won against another champion
+    rate_champion_vs_champion = champion_vs_champion.div(total_champion_vs_champion)
+
+    rate_champion_vs_champion.to_csv('role_winrate_champ_vs_champ')
+
+    return rate_champion_vs_champion
