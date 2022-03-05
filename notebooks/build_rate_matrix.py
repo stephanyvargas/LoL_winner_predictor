@@ -85,6 +85,6 @@ def Role_DataFrame(df_BLUE, df_RED):
     #percentage of times that a champion has lost or won against another champion
     rate_champion_vs_champion = champion_vs_champion.div(total_champion_vs_champion)
 
-    rate_champion_vs_champion.to_csv('role_winrate_champ_vs_champ')
+    rate_champion_vs_champion.to_csv('role_winrate_champ_vs_champ.csv')
 
     return rate_champion_vs_champion
