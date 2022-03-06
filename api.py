@@ -2,8 +2,11 @@ import pandas as pd
 import requests
 
 from fastapi import FastAPI
+import joblib
+import uvicorn
 
 
+#Declaring the FastApi instance
 app = FastAPI()
 url = 'https://ddragon.leagueoflegends.com/cdn/12.3.1/data/en_US/champion.json'
 resp = requests.get(url=url)
@@ -12,12 +15,12 @@ data = resp.json()
 
 def get_champion_id(name, data):
     champion_info = pd.DataFrame(data['data'])
-    return champion_info.loc['key', name]
+    return int(champion_info.loc['key', name])
 
 
 @app.get("/")
 def index():
-    return dict(greeting="hello")
+    return {'message': 'Welcome to Predicting LoL Winner!'}
 
 
 @app.get("/predict")
@@ -34,20 +37,20 @@ def predict(top_blue,   #Blue team top line champion
 
     #Predcitions are done in terms of the champion_id not the name
     ##Function get_champion_id searchs and returns the id of champions
-    X = pd.DataFrame(dict(
-        'TOP_x' = get_champion_id(top_blue, data),
-        'JGL_x' = get_champion_id(jgl_blue, data),
-        'BOT_x' = get_champion_id(bot_blue, data),
-        'MID_x' = get_champion_id(mid_blue, data),
-        'SUP_x' = get_champion_id(sup_blue, data),
-        'TOP_y' = get_champion_id(top_red, data),
-        'JGL_y' = get_champion_id(jgl_red, data),
-        'BOT_y' = get_champion_id(bot_red, data),
-        'MID_y' = get_champion_id(mid_red, data),
-        'SUP_y' = get_champion_id(sup_red, data)
-        )
+    X = pd.DataFrame({
+        'TOP_x' : get_champion_id(top_blue, data),
+        'JGL_x' : get_champion_id(jgl_blue, data),
+        'BOT_x' : get_champion_id(bot_blue, data),
+        'MID_x' : get_champion_id(mid_blue, data),
+        'SUP_x' : get_champion_id(sup_blue, data),
+        'TOP_y' : get_champion_id(top_red, data),
+        'JGL_y' : get_champion_id(jgl_red, data),
+        'BOT_y' : get_champion_id(bot_red, data),
+        'MID_y' : get_champion_id(mid_red, data),
+        'SUP_y' : get_champion_id(sup_red, data)
+        }, index=[0])
 
-    # pipeline previously trained with the test data
+    #pipeline previously trained with the test data
     pipeline = joblib.load('model.joblib')
 
     #make prediction
