@@ -84,7 +84,23 @@ def Role_DataFrame(df_BLUE, df_RED):
 
     #percentage of times that a champion has lost or won against another champion
     rate_champion_vs_champion = champion_vs_champion.div(total_champion_vs_champion)
-
     rate_champion_vs_champion.to_csv('role_winrate_champ_vs_champ.csv')
-
     return rate_champion_vs_champion
+
+
+def ChampionWinrate(df_BLUE, df_RED):
+    df_BLUE_Champwins = df_BLUE[["champion_name","champion_id","win"]][df_BLUE.win == True]
+    df_RED_Champwins = df_RED[["champion_name","champion_id","win"]][df_RED.win == True]
+
+    #It dosen't matter which team the champion is in. Merging both Dataframes
+    df_both_champwins = pd.concat([df_BLUE_Champwins, df_RED_Champwins], verify_integrity=True)
+
+    #Count and normalize the number of times a champion has won
+    df_total_champwins = df_both_champwins['champion_id'].value_counts(normalize=True)
+    champion_winrate = pd.DataFrame(df_total_champwins)
+    champion_winrate.rename(columns = {'champion_id':'winrate'}, inplace = True)
+    champion_winrate['champion_id'] = champion_winrate.index
+
+    #save the values in csv format
+    df.to_csv(r'champion_winrate_dict.csv', index=False)
+    return df
