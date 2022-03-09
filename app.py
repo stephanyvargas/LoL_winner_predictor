@@ -3,6 +3,7 @@ import json
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
 
 st.title('LOL Winner Prediction')
 
@@ -57,3 +58,46 @@ for red_champion in red_team.values():
 
 
 # st.write('You selected team:', blue_team["TOP"])
+
+def predict(top_blue,   #Blue team top line champion
+            jgl_blue,   #Blue team jungler champion
+            bot_blue,   #Blue team bottom line champion
+            mid_blue,   #Blue team middle line champion
+            sup_blue,   #Blue team support champion
+            top_red,    #Red team top line champion
+            jgl_red,    #Red team jungler champion
+            bot_red,    #Red team bottom line champion
+            mid_red,    #Red team middle line champion
+            sup_red):   #Red team support champion
+
+    #Predcitions are done in terms of the champion_id not the name
+    ##Function get_champion_id searchs and returns the id of champions
+    X = pd.DataFrame({
+        'TOP_x' : top_blue,
+        'JGL_x' : jgl_blue,
+        'BOT_x' : bot_blue,
+        'MID_x' : mid_blue,
+        'SUP_x' : sup_blue,
+        'TOP_y' : top_red,
+        'JGL_y' : jgl_red,
+        'BOT_y' : bot_red,
+        'MID_y' : mid_red,
+        'SUP_y' : sup_red,
+        }, index=[0])
+
+    #pipeline previously trained with the test data
+    pipeline = joblib.load('model.joblib')
+
+    #make prediction
+    results = pipeline.predict(X)
+    prediction = float(results[0])
+
+    return dict(winner=prediction)
+
+#st.button
+if st.button('Predict Winner'):
+    #st.write(predict('Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie'))
+    st.write(predict(blue_team['TOP'], blue_team['JGL'], blue_team['MID'], blue_team['BOT'], blue_team['SUP'],
+        red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP']))
+else:
+    st.write('Goodbye')
