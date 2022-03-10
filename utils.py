@@ -27,7 +27,10 @@ def get_data():
     #remove the games were a champion played in both teams -> not possible
     df_teams = df_teams[(df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_1_1') & (df_teams.id != '2020 Mid-Season Cup/Scoreboards/Knockout Stage_3_1')]
     df_teams.rename(columns={"id": "game_id"})
-    return df_teams[df_teams.year > 2020]
+
+    df_teams['patch'] = pd.to_numeric(df_teams["patch"], downcast="float")
+    #return df_teams[df_teams.patch > 10]
+    return df_teams[df_teams.year > 2015]
 
 
 def get_data_split(split_value = 0.8):
@@ -35,7 +38,7 @@ def get_data_split(split_value = 0.8):
 
     df = get_data()
 
-    df['patch'] = pd.to_numeric(df["patch"], downcast="float")
+    #df['patch'] = pd.to_numeric(df["patch"], downcast="float")
     df_sort = df.sort_values(['patch'], ascending=True)
 
     #Return data to train, test, score and evaluate
@@ -44,9 +47,11 @@ def get_data_split(split_value = 0.8):
     #y = df_sort[data_length:-5]['winner']
 
     #Get the 60% + 20% of data as training
+    #data_train = df_sort[df_sort.patch < 11.5]
     data_train = df_sort[df_sort.year < 2021]
 
     #Data to test are games played in 2021
+    #data_test = df_sort[df_sort.patch >= 11.5]
     data_test = df_sort[df_sort.year == 2021]
 
     ##Get the last 5 games for evaluating in the end
@@ -108,10 +113,10 @@ def get_train_data_only(BANS = False, evaluate_data = False, train_data = True, 
 
 def get_synergy(x,y, df_synergy_matrix):
     try:
-        x = df_synergy_matrix.loc[x][y]
+        value = df_synergy_matrix.loc[x][y]
     except KeyError:
-        x = 0.5
-    return x
+        value = 0.5
+    return value
 
 
 def get_vs_rate(id_x, role, id_y, rate_champion_vs_champion):
@@ -123,6 +128,14 @@ def get_vs_rate(id_x, role, id_y, rate_champion_vs_champion):
         except KeyError:
             x = 0.5
     return x
+
+
+def get_winrate(x, winrate_matrix):
+    try:
+        value = winrate_matrix.loc[x]['winrate']
+    except KeyError:
+        value = 0.001
+    return value
 
 
 if __name__ == '__main__':
