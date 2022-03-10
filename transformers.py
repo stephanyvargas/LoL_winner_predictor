@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from utils import get_synergy, get_vs_rate
+from utils import get_synergy, get_vs_rate, get_winrate
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
@@ -37,4 +37,21 @@ class RoleFeature(BaseEstimator, TransformerMixin):
     def transform(self, X, y=None):
         #Get the winrate of the same role champions
         df = X.apply(lambda z: get_vs_rate(z[0], self.role, z[1], self.rate_champion_vs_champion), axis=1)
+        return pd.DataFrame(df)
+
+
+class ChampionWinrateFeature(BaseEstimator, TransformerMixin):
+
+    def __init__(self):
+        #get the role winrate champion vs champion DataFrame
+        champion_winrate = pd.read_csv('champion_winrate_dict.csv')
+        champion_winrate.index = champion_winrate['champion_id']
+        self.champion_winrate = champion_winrate
+
+    def fit(self, X=None, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        #Get the winrate of the same role champions
+        df = X.apply(lambda y: [get_winrate(x, self.champion_winrate) for x in y], axis=1).apply(np.mean)
         return pd.DataFrame(df)
