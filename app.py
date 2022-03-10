@@ -1,8 +1,10 @@
 import json
+from webbrowser import get
 
 import streamlit as st
 import pandas as pd
 import numpy as np
+import requests
 import joblib
 
 st.title('LOL Winner Prediction')
@@ -14,11 +16,14 @@ roles = ["TOP", "JGL", "MID", "BOT", "SUP"]
 api_version = "12.4.1"
 champions_url = f"https://ddragon.leagueoflegends.com/cdn/{api_version}/data/en_US/champion.json"
 image_url = f"http://ddragon.leagueoflegends.com/cdn/{api_version}/img/champion/"
+resp = requests.get(url=champions_url)
+data = resp.json()
 
 @st.cache
 def load_data(filename):
     data = pd.read_json(filename)
     return data
+    #.set_index('data.key')
 
 champions_data = load_data(champions_url)
 
@@ -58,6 +63,10 @@ for red_champion in red_team.values():
 
 
 # st.write('You selected team:', blue_team["TOP"])
+def get_champion_id(name, data):
+    champion_info = pd.DataFrame(data['data'])
+    return int(champion_info.loc['key', name])
+
 
 def predict(top_blue,   #Blue team top line champion
             jgl_blue,   #Blue team jungler champion
@@ -73,16 +82,16 @@ def predict(top_blue,   #Blue team top line champion
     #Predcitions are done in terms of the champion_id not the name
     ##Function get_champion_id searchs and returns the id of champions
     X = pd.DataFrame({
-        'TOP_x' : top_blue,
-        'JGL_x' : jgl_blue,
-        'BOT_x' : bot_blue,
-        'MID_x' : mid_blue,
-        'SUP_x' : sup_blue,
-        'TOP_y' : top_red,
-        'JGL_y' : jgl_red,
-        'BOT_y' : bot_red,
-        'MID_y' : mid_red,
-        'SUP_y' : sup_red,
+        'TOP_x' : get_champion_id(top_blue, data),
+        'JGL_x' : get_champion_id(jgl_blue, data),
+        'BOT_x' : get_champion_id(bot_blue, data),
+        'MID_x' : get_champion_id(mid_blue, data),
+        'SUP_x' : get_champion_id(sup_blue, data),
+        'TOP_y' : get_champion_id(top_red, data),
+        'JGL_y' : get_champion_id(jgl_red, data),
+        'BOT_y' : get_champion_id(bot_red, data),
+        'MID_y' : get_champion_id(mid_red, data),
+        'SUP_y' : get_champion_id(sup_red, data)
         }, index=[0])
 
     #pipeline previously trained with the test data
@@ -94,10 +103,18 @@ def predict(top_blue,   #Blue team top line champion
 
     return dict(winner=prediction)
 
+col1, col2, col3, col4, col5  = st.columns(5)
+
+#st.write(get_champion_id('Aatrox', data))
+
 #st.button
-if st.button('Predict Winner'):
-    #st.write(predict('Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie', 'Annie'))
-    st.write(predict(blue_team['TOP'], blue_team['JGL'], blue_team['MID'], blue_team['BOT'], blue_team['SUP'],
-        red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP']))
-else:
-    st.write('Goodbye')
+if col3.button('Predict Winner'):
+    #if st.button(predict('Annie', 'Annie', 'Annie', 'Annie', 'Annie'],
+    #red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP']))
+    winner = predict(blue_team['TOP'], blue_team['JGL'], blue_team['MID'], blue_team['BOT'], blue_team['SUP'],
+    red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP'])
+    if winner['winner'] == 0:
+        col3.write('RED Team Wins!')
+    else:
+        col3.write('BLUE Team Wins!')
+    st.balloons()
