@@ -67,6 +67,8 @@ def get_champion_id(name, data):
     champion_info = pd.DataFrame(data['data'])
     return int(champion_info.loc['key', name])
 
+#def predict_proba():
+    #return 'X'
 
 def predict(top_blue,   #Blue team top line champion
             jgl_blue,   #Blue team jungler champion
@@ -99,22 +101,26 @@ def predict(top_blue,   #Blue team top line champion
 
     #make prediction
     results = pipeline.predict(X)
+    var_proba = pipeline.predict_proba(X)
     prediction = float(results[0])
+    return dict(winner=prediction), dict(proba=var_proba)
 
-    return dict(winner=prediction)
 
-col1, col2, col3, col4, col5  = st.columns(5)
+
+col1, col2, col3  = st.columns((3))
 
 #st.write(get_champion_id('Aatrox', data))
 
 #st.button
-if col3.button('Predict Winner'):
+if col2.button('Predict Winner'):
     #if st.button(predict('Annie', 'Annie', 'Annie', 'Annie', 'Annie'],
     #red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP']))
-    winner = predict(blue_team['TOP'], blue_team['JGL'], blue_team['MID'], blue_team['BOT'], blue_team['SUP'],
+    winner,proba = predict(blue_team['TOP'], blue_team['JGL'], blue_team['MID'], blue_team['BOT'], blue_team['SUP'],
     red_team['TOP'], red_team['JGL'], red_team['MID'], red_team['BOT'], red_team['SUP'])
     if winner['winner'] == 0:
-        col3.write('RED Team Wins!')
+        col2.title('RED Wins!')
+        col2.header(np.round(proba['proba'][0][0], decimals = 2))
     else:
-        col3.write('BLUE Team Wins!')
+        col2.title('BLUE Wins!')
+        col2.header(np.round(proba['proba'][0][1], decimals = 2))
     st.balloons()
